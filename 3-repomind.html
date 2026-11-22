@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#080b14">
+<title>RepoMind | Code Intelligence</title>
+<meta name="description" content="RepoMind — understand any GitHub codebase. Stats, languages, file tree, extensions and README, instantly.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:#080b14;color:#f4f5ff;font-family:'Inter',system-ui,sans-serif;min-height:100vh;
+    overflow-x:hidden;
+  }
+  /* ambient animated background */
+  .aurora{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none}
+  .blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;will-change:transform}
+  .b1{width:520px;height:520px;background:radial-gradient(circle,#3b2a8f,transparent 65%);top:-160px;left:-120px;animation:drift1 26s ease-in-out infinite alternate}
+  .b2{width:460px;height:460px;background:radial-gradient(circle,#123a63,transparent 65%);top:30%;right:-160px;animation:drift2 32s ease-in-out infinite alternate}
+  .b3{width:420px;height:420px;background:radial-gradient(circle,#4a1e6e,transparent 65%);bottom:-140px;left:32%;animation:drift3 29s ease-in-out infinite alternate}
+  @keyframes drift1{to{transform:translate(140px,110px) scale(1.15)}}
+  @keyframes drift2{to{transform:translate(-120px,90px) scale(.9)}}
+  @keyframes drift3{to{transform:translate(90px,-120px) scale(1.1)}}
+  .grid-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background-image:linear-gradient(rgba(120,140,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(120,140,255,.045) 1px,transparent 1px);
+    background-size:44px 44px;
+    mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 100%);
+    -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 100%);
+  }
+  nav{height:70px;padding:0 7%;display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid rgba(60,70,110,.4);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    position:sticky;top:0;background:rgba(8,11,20,.72);z-index:20}
+  .logo{font-family:'Space Grotesk';font-size:24px;font-weight:700;color:#c9b8ff;letter-spacing:.5px}
+  .logo .gem{color:#8f7bff;display:inline-block;animation:gemSpin 9s linear infinite}
+  @keyframes gemSpin{0%{transform:rotate(0)}50%{transform:rotate(180deg)}100%{transform:rotate(360deg)}}
+  .version{color:#a7b0c8;font-size:11px;letter-spacing:2px;border:1px solid #343b55;padding:7px 14px;border-radius:20px;
+    font-family:'JetBrains Mono';background:rgba(20,26,44,.6)}
+  main{width:92%;max-width:1050px;margin:0 auto;padding:64px 0 20px}
+  .hero{text-align:center;margin-bottom:42px;animation:rise .8s cubic-bezier(.2,.8,.2,1) both}
+  .hero h1{font-family:'Space Grotesk';font-weight:700;font-size:clamp(36px,7.5vw,62px);line-height:1.12;margin-bottom:18px;letter-spacing:-.5px}
+  .gradient{background:linear-gradient(90deg,#a58bff,#55d6ff,#a58bff);background-size:200% 100%;
+    background-clip:text;-webkit-background-clip:text;color:transparent;animation:gradSlide 6s linear infinite}
+  @keyframes gradSlide{to{background-position:200% 0}}
+  .hero p{color:#9da8c0;line-height:1.7;max-width:520px;margin:0 auto;font-size:16px}
+  @keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+  .search-box{display:flex;gap:10px;padding:9px;border-radius:16px;position:relative;
+    background:rgba(18,24,41,.85);border:1px solid #343b55;
+    transition:border-color .3s,box-shadow .3s;animation:rise .8s .12s cubic-bezier(.2,.8,.2,1) both}
+  .search-box:focus-within{border-color:#7c63f5;box-shadow:0 0 0 4px rgba(124,99,245,.14),0 12px 44px rgba(124,99,245,.16)}
+  input{flex:1;min-width:0;padding:15px 14px;background:transparent;border:none;outline:none;color:#fff;font-size:15px;font-family:'JetBrains Mono',monospace}
+  input::placeholder{color:#5c6885}
+  button{background:linear-gradient(135deg,#8065ff,#5b8cff);color:#fff;border:none;border-radius:11px;padding:15px 24px;
+    font-weight:600;font-size:14.5px;cursor:pointer;font-family:'Inter';white-space:nowrap;
+    transition:transform .15s,box-shadow .25s,opacity .2s;box-shadow:0 6px 22px rgba(110,90,255,.35)}
+  button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 30px rgba(110,90,255,.5)}
+  button:active:not(:disabled){transform:scale(.97)}
+  button:disabled{opacity:.55;cursor:wait}
+  .status{text-align:center;margin:22px 0 4px;color:#a6b0c9;font-size:13.5px;font-family:'JetBrains Mono';min-height:20px;
+    animation:rise .8s .2s cubic-bezier(.2,.8,.2,1) both}
+  .status.err{color:#ff8f8f}
+  .status.ok{color:#7ce8b0}
+  .dots::after{content:'';animation:dots 1.2s steps(4) infinite}
+  @keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+  .results{margin-top:34px}
+  .rv{opacity:0;transform:translateY(18px);animation:rise .6s cubic-bezier(.2,.8,.2,1) forwards}
+  .repo-heading{background:rgba(18,24,41,.85);border:1px solid #29314b;padding:26px;border-radius:18px;margin-bottom:20px;
+    position:relative;overflow:hidden}
+  .repo-heading::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,#a58bff,#55d6ff)}
+  .repo-heading h2{color:#c5b4ff;margin-bottom:8px;overflow-wrap:anywhere;font-family:'Space Grotesk';font-size:26px}
+  .repo-heading .branch{display:inline-block;font-family:'JetBrains Mono';font-size:11.5px;color:#8fd0ff;border:1px solid #2c4a66;
+    background:rgba(24,52,80,.5);border-radius:14px;padding:3px 11px;margin:6px 0 10px}
+  .repo-heading p{color:#a6b0c9;line-height:1.65;font-size:14.5px}
+  .repo-link{display:inline-flex;align-items:center;gap:6px;color:#b5a5ff;margin-top:16px;text-decoration:none;font-weight:600;font-size:14px;
+    transition:color .2s,gap .2s}
+  .repo-link:hover{color:#dcd2ff;gap:10px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  .card{background:rgba(18,24,41,.85);border:1px solid #29314b;padding:20px;border-radius:15px;min-width:0;
+    transition:transform .25s,border-color .25s,box-shadow .25s}
+  .card:hover{transform:translateY(-4px);border-color:#4a4170;box-shadow:0 14px 34px rgba(0,0,0,.4)}
+  .card small{color:#8e9ab5;font-size:12px;letter-spacing:1.6px;text-transform:uppercase;font-weight:600}
+  .card h2{margin-top:10px;font-size:clamp(22px,4.5vw,30px);color:#b4a5ff;overflow-wrap:anywhere;font-family:'Space Grotesk'}
+  .panel{background:rgba(18,24,41,.85);border:1px solid #29314b;padding:24px;border-radius:16px;margin-bottom:18px;
+    transition:border-color .25s}
+  .panel:hover{border-color:#3a3455}
+  .panel h3{margin-bottom:18px;color:#c5b9ff;font-family:'Space Grotesk';font-size:17px;display:flex;align-items:center;gap:9px}
+  .panel h3 .gem{color:#8f7bff;font-size:13px}
+  pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#c1cce1;font-size:13px;line-height:1.85;max-height:360px;overflow:auto;
+    font-family:'JetBrains Mono',monospace;scrollbar-width:thin;scrollbar-color:#343b55 transparent}
+  pre::-webkit-scrollbar{width:8px;height:8px}
+  pre::-webkit-scrollbar-thumb{background:#343b55;border-radius:8px}
+  .lang-item{padding:11px 0;border-bottom:1px solid rgba(50,60,95,.55)}
+  .lang-item:last-child{border:none}
+  .lang-row{display:flex;justify-content:space-between;color:#c5cee1;font-size:14px;margin-bottom:7px}
+  .lang-row .kb{color:#7d89a5;font-family:'JetBrains Mono';font-size:12.5px}
+  .bar{height:6px;border-radius:6px;background:rgba(50,60,95,.5);overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#8f7bff,#55d6ff);width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+  .ext-chips{display:flex;flex-wrap:wrap;gap:9px}
+  .chip{font-family:'JetBrains Mono';font-size:12.5px;color:#cfd8ec;border:1px solid #33405f;background:rgba(28,36,60,.7);
+    border-radius:9px;padding:6px 12px;transition:transform .15s,border-color .2s}
+  .chip:hover{transform:translateY(-2px);border-color:#5b5478}
+  .chip b{color:#a58bff;font-weight:600}
+  .tree-line{display:block}
+  .rm-body{color:#c1cce1;font-size:13.5px;line-height:1.8;max-height:420px;overflow:auto;font-family:'Inter';scrollbar-width:thin;scrollbar-color:#343b55 transparent}
+  .rm-body::-webkit-scrollbar{width:8px}
+  .rm-body::-webkit-scrollbar-thumb{background:#343b55;border-radius:8px}
+  .rm-body h1,.rm-body h2,.rm-body h3{font-family:'Space Grotesk';color:#dcd2ff;margin:16px 0 8px;line-height:1.3}
+  .rm-body h1{font-size:20px}.rm-body h2{font-size:17px}.rm-body h3{font-size:15px}
+  .rm-body code{font-family:'JetBrains Mono';font-size:12px;background:rgba(40,48,78,.7);border-radius:5px;padding:2px 6px;color:#a8d8ff}
+  .rm-body pre{background:rgba(12,16,28,.9);border:1px solid #232c46;border-radius:10px;padding:13px;margin:10px 0;max-height:260px}
+  .rm-body pre code{background:none;padding:0;color:#c1cce1}
+  .rm-body b{color:#e8e4ff}
+  .rm-body p{margin:8px 0}
+  .empty{text-align:center;padding:44px 30px;color:#8994ad;border:1px dashed #343b55;border-radius:18px;margin-top:36px;line-height:1.8;
+    animation:rise .8s .28s cubic-bezier(.2,.8,.2,1) both}
+  .empty .gem{font-size:26px;color:#5a5485;display:inline-block;animation:gemSpin 9s linear infinite}
+  footer{text-align:center;padding:38px 20px;color:#77829c;font-size:13px;line-height:1.9}
+  footer .heart{color:#a58bff}
+  .skeleton{position:relative;overflow:hidden;background:rgba(30,38,64,.6);border-radius:8px;min-height:14px}
+  .skeleton::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(140,160,255,.12),transparent);
+    animation:shimmer 1.3s infinite}
+  @keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+  @media(max-width:650px){
+    main{padding-top:42px}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .search-box{flex-direction:column}
+    .search-box button{width:100%}
+    nav{padding:0 5%}
+  }
+</style>
+</head>
+<body>
+<div class="aurora"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<div class="grid-bg"></div>
+
+<nav>
+  <div class="logo"><span class="gem">&#9672;</span> RepoMind</div>
+  <div class="version">VERSION 1.0</div>
+</nav>
+
+<main>
+  <section class="hero">
+    <h1>Understand Any<br><span class="gradient">Codebase.</span></h1>
+    <p>Explore GitHub repositories, discover their architecture and understand how projects work.</p>
+  </section>
+
+  <div class="search-box">
+    <input id="repo" placeholder="Paste GitHub URL or owner/repo..." spellcheck="false" autocomplete="off">
+    <button id="analyze">Analyze Repository &rarr;</button>
+  </div>
+
+  <div class="status" id="status">Ready to explore your first repository.</div>
+
+  <section class="results" id="results" hidden>
+    <div class="repo-heading rv">
+      <h2 id="repoName"></h2>
+      <span class="branch" id="branchPill"></span>
+      <p id="description"></p>
+      <a id="repoLink" class="repo-link" target="_blank" rel="noopener noreferrer">View on GitHub <span>&rarr;</span></a>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="panel rv"><h3><span class="gem">&#9672;</span> Programming Languages</h3><div id="languages"></div></div>
+    <div class="panel rv"><h3><span class="gem">&#9672;</span> Project Folders</h3><pre id="folders"></pre></div>
+    <div class="panel rv"><h3><span class="gem">&#9672;</span> File Explorer</h3><pre id="files"></pre></div>
+    <div class="panel rv"><h3><span class="gem">&#9672;</span> File Extensions</h3><div class="ext-chips" id="extensions"></div></div>
+    <div class="panel rv"><h3><span class="gem">&#9672;</span> README Preview</h3><div class="rm-body" id="readme"></div></div>
+  </section>
+
+  <div class="empty" id="empty"><span class="gem">&#9672;</span><br><br>Your repository intelligence dashboard<br>will appear here.</div>
+</main>
+
+<footer>
+  RepoMind &copy; 2026 &middot; Built for Developers<br>
+  crafted with <span class="heart">&hearts;</span> by Aanand Designs
+</footer>
+
+<script>
+(function(){
+'use strict';
+var API='https://api.github.com';
+var repoEl=document.getElementById('repo'),btn=document.getElementById('analyze'),
+    statusEl=document.getElementById('status'),resultsEl=document.getElementById('results'),
+    emptyEl=document.getElementById('empty');
+
+function setStatus(msg,kind){
+  statusEl.className='status'+(kind?' '+kind:'');
+  statusEl.textContent=msg;
+}
+function setLoading(msg){
+  statusEl.className='status dots';
+  statusEl.textContent=msg;
+}
+
+function parseRepo(value){
+  value=(value||'').trim()
+    .replace(/^https?:\/\/(www\.)?github\.com\//i,'')
+    .replace(/^github\.com\//i,'');
+  var m=/^([A-Za-z0-9-]+)\/([A-Za-z0-9_.-]+?)(?:\.git)?\/?$/.exec(value);
+  if(!m)return null;
+  return {owner:m[1],name:m[2]};
+}
+
+function gh(path){
+  return fetch(API+path,{headers:{'Accept':'application/vnd.github+json'}}).then(function(r){
+    if(r.status===404){var e=new Error('Repository not found or inaccessible. Check the spelling — only public repos work.');e.code=404;throw e}
+    if(r.status===403){
+      var reset=r.headers.get('X-RateLimit-Reset');
+      var mins=reset?Math.max(1,Math.ceil((reset*1000-Date.now())/60000)):null;
+      var e2=new Error("GitHub's free rate limit was reached for this network."+(mins?' Try again in about '+mins+' min.':' Try again in a little while.'));
+      e2.code=429;throw e2;
+    }
+    if(!r.ok){var e3=new Error('GitHub API error ('+r.status+'). Please try again.');e3.code=r.status;throw e3}
+    return r.json();
+  });
+}
+
+function b64utf8(b64){
+  var bin=atob(b64.replace(/\s/g,''));
+  var bytes=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+/* very small, safe markdown renderer: escape first, then format */
+function renderMarkdown(md){
+  var out=[],inCode=false;
+  var lines=md.split('\n');
+  for(var i=0;i<lines.length;i++){
+    var line=lines[i];
+    if(/^\s*```/.test(line)){out.push(inCode?'</code></pre>':'<pre><code>');inCode=!inCode;continue}
+    if(inCode){out.push(esc(line));continue}
+    var e=esc(line);
+    e=e.replace(/!\[([^\]]*)\]\([^)]*\)/g,'$1')
+       .replace(/\[([^\]]+)\]\([^)]*\)/g,'$1')
+       .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
+       .replace(/__([^_]+)__/g,'<b>$1</b>')
+       .replace(/`([^`]+)`/g,'<code>$1</code>');
+    if(/^#{1,6}\s/.test(line)){
+      var lvl=Math.min(3,line.match(/^#+/)[0].length);
+      e='<h'+lvl+'>'+e.replace(/^#+\s*/,'')+'</h'+lvl+'>';
+    }else if(/^\s*$/.test(line)){e=''}
+    else{e='<p>'+e+'</p>'}
+    out.push(e);
+  }
+  if(inCode)out.push('</code></pre>');
+  return out.join('\n');
+}
+
+function countUp(el,target,dur){
+  var t0=null;
+  function step(ts){
+    if(!t0)t0=ts;
+    var p=Math.min(1,(ts-t0)/dur);
+    var eased=1-Math.pow(1-p,3);
+    el.textContent=Math.round(target*eased).toLocaleString();
+    if(p<1)requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function analyze(){
+  var input=repoEl.value;
+  if(!input.trim()){setStatus('Please enter a GitHub repository URL.','err');repoEl.focus();return}
+  var parsed=parseRepo(input);
+  if(!parsed){setStatus('Invalid GitHub URL. Use owner/repository or a full github.com link.','err');return}
+
+  btn.disabled=true;btn.textContent='Analyzing\u2026';
+  resultsEl.hidden=true;emptyEl.hidden=true;
+  setLoading('Connecting to GitHub');
+
+  var base='/repos/'+parsed.owner+'/'+parsed.name;
+  var details;
+  gh(base).then(function(d){
+    details=d;
+    if(d.private)throw Object.assign(new Error('Only public repositories are supported.'),{code:400});
+    setLoading('Fetching languages');
+    return gh(base+'/languages');
+  }).then(function(langs){
+    setLoading('Reading file tree');
+    return Promise.all([Promise.resolve(langs),gh(base+'/git/trees/'+encodeURIComponent(details.default_branch)+'?recursive=1')]);
+  }).then(function(arr){
+    var langs=arr[0],treeData=arr[1];
+    setLoading('Loading README');
+    return gh(base+'/readme').then(function(r){return [langs,treeData,r]}).catch(function(e){
+      if(e.code===404)return [langs,treeData,null];
+      throw e;
+    });
+  }).then(function(arr){
+    var langs=arr[0],treeData=arr[1],readmeData=arr[2];
+    var tree=treeData.tree||[];
+    var files=[],folderSet={},i,item;
+    for(i=0;i<tree.length;i++){
+      item=tree[i];
+      if(item.type==='blob')files.push(item.path);
+      else if(item.type==='tree')folderSet[item.path]=1;
+    }
+    var folders=Object.keys(folderSet).sort();
+    var extensions={},ext;
+    for(i=0;i<files.length;i++){
+      var baseName=files[i].split('/').pop();
+      ext=baseName.indexOf('.')>-1?baseName.split('.').pop().toLowerCase():'no extension';
+      extensions[ext]=(extensions[ext]||0)+1;
+    }
+    var readme='No README found.';
+    if(readmeData&&readmeData.content){
+      try{readme=b64utf8(readmeData.content).slice(0,12000)}catch(e){readme='README could not be decoded.'}
+    }
+    paint(details,langs,files,folders,extensions,readme,treeData.truncated);
+    setStatus(treeData.truncated?'Analysis complete — GitHub truncated the file tree (very large repo).':'\u2713 Repository successfully analyzed!',treeData.truncated?'':'ok');
+  }).catch(function(err){
+    setStatus('Error: '+(err&&err.message?err.message:'Something went wrong.'),'err');
+    emptyEl.hidden=false;
+  }).finally(function(){
+    btn.disabled=false;btn.innerHTML='Analyze Repository &rarr;';
+  });
+}
+
+function paint(d,langs,files,folders,extensions,readme,truncated){
+  document.getElementById('repoName').textContent=d.full_name;
+  document.getElementById('branchPill').textContent='\u2387 '+d.default_branch;
+  document.getElementById('description').textContent=d.description||'No description available.';
+  document.getElementById('repoLink').href=d.html_url;
+
+  /* stats */
+  var stats=[['Stars',d.stargazers_count],['Forks',d.forks_count],['Files',files.length],['Folders',folders.length]];
+  var sc=document.getElementById('stats');sc.replaceChildren();
+  stats.forEach(function(pair,idx){
+    var card=document.createElement('div');card.className='card rv';
+    card.style.animationDelay=(idx*0.07)+'s';
+    var small=document.createElement('small');small.textContent=pair[0];
+    var h=document.createElement('h2');
+    card.append(small,h);sc.appendChild(card);
+    countUp(h,pair[1],750);
+  });
+
+  /* languages */
+  var lc=document.getElementById('languages');lc.replaceChildren();
+  var entries=Object.entries(langs).sort(function(a,b){return b[1]-a[1]});
+  if(!entries.length)lc.textContent='No language data available.';
+  var total=entries.reduce(function(s,e){return s+e[1]},0)||1;
+  entries.forEach(function(e){
+    var item=document.createElement('div');item.className='lang-item';
+    var row=document.createElement('div');row.className='lang-row';
+    var t=document.createElement('span');t.textContent=e[0];
+    var s=document.createElement('span');s.className='kb';
+    s.textContent=(e[1]/1024).toFixed(1)+' KB \u00b7 '+Math.round(e[1]/total*100)+'%';
+    row.append(t,s);
+    var bar=document.createElement('div');bar.className='bar';
+    var fill=document.createElement('i');bar.appendChild(fill);
+    item.append(row,bar);lc.appendChild(item);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){fill.style.width=Math.max(3,Math.round(e[1]/total*100))+'%'})});
+  });
+
+  /* folders + files */
+  document.getElementById('folders').textContent=folders.slice(0,100).join('\n')||'No folders found.';
+  document.getElementById('files').textContent=files.slice(0,150).join('\n')||'No files found.';
+
+  /* extensions */
+  var ec=document.getElementById('extensions');ec.replaceChildren();
+  Object.entries(extensions).sort(function(a,b){return b[1]-a[1]}).forEach(function(e){
+    var c=document.createElement('span');c.className='chip';
+    var b=document.createElement('b');b.textContent=e[1]+'\u00d7';
+    c.append(b,' .'+e[0]);ec.appendChild(c);
+  });
+
+  /* readme */
+  document.getElementById('readme').innerHTML=renderMarkdown(readme);
+
+  /* staggered reveals */
+  resultsEl.hidden=false;
+  var rvs=resultsEl.querySelectorAll('.rv');
+  rvs.forEach(function(el,i){
+    el.style.animation='none';void el.offsetWidth;
+    el.style.animation='';el.style.animationDelay=(0.08+i*0.07)+'s';
+  });
+  resultsEl.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+btn.addEventListener('click',analyze);
+repoEl.addEventListener('keydown',function(e){if(e.key==='Enter')analyze()});
+
+/* shareable auto-analyze: /repomind?repo=owner/name */
+try{
+  var q=new URLSearchParams(location.search).get('repo');
+  if(q){repoEl.value=q;setTimeout(analyze,500)}
+}catch(e){}
+
+/* hidden QA handle (no UI impact) */
+window.__rm={analyze:analyze,parse:parseRepo,set:function(v){repoEl.value=v}};
+})();
+</script>
+</body>
+</html>

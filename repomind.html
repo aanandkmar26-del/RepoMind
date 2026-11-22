@@ -10,6 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
+  @property --ang{syntax:'<angle>';initial-value:0deg;inherits:false}
+  @keyframes spinAng{to{--ang:360deg}}
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
   body{
@@ -50,12 +52,23 @@
   .search-box{display:flex;gap:10px;padding:9px;border-radius:16px;position:relative;
     background:rgba(18,24,41,.85);border:1px solid #343b55;
     transition:border-color .3s,box-shadow .3s;animation:rise .8s .12s cubic-bezier(.2,.8,.2,1) both}
+  .search-box::before{content:'';position:absolute;inset:-1px;border-radius:17px;padding:1.5px;
+    background:conic-gradient(from var(--ang),#8065ff,#55d6ff,#a58bff,#5b8cff,#8065ff);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;
+    opacity:.45;animation:spinAng 6s linear infinite;pointer-events:none;transition:opacity .3s}
+  .search-box:focus-within::before{opacity:1}
   .search-box:focus-within{border-color:#7c63f5;box-shadow:0 0 0 4px rgba(124,99,245,.14),0 12px 44px rgba(124,99,245,.16)}
   input{flex:1;min-width:0;padding:15px 14px;background:transparent;border:none;outline:none;color:#fff;font-size:15px;font-family:'JetBrains Mono',monospace}
   input::placeholder{color:#5c6885}
-  button{background:linear-gradient(135deg,#8065ff,#5b8cff);color:#fff;border:none;border-radius:11px;padding:15px 24px;
+  button{position:relative;overflow:hidden;background:linear-gradient(135deg,#8065ff,#5b8cff);color:#fff;border:none;border-radius:11px;padding:15px 24px;
     font-weight:600;font-size:14.5px;cursor:pointer;font-family:'Inter';white-space:nowrap;
-    transition:transform .15s,box-shadow .25s,opacity .2s;box-shadow:0 6px 22px rgba(110,90,255,.35)}
+    transition:box-shadow .25s,opacity .2s;box-shadow:0 6px 22px rgba(110,90,255,.35);will-change:transform}
+  button::after{content:'';position:absolute;top:0;left:-90%;width:55%;height:100%;
+    background:linear-gradient(100deg,transparent,rgba(255,255,255,.4),transparent);
+    transform:skewX(-20deg);pointer-events:none}
+  button:hover:not(:disabled)::after{animation:shine .85s ease}
+  @keyframes shine{to{left:130%}}
   button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 30px rgba(110,90,255,.5)}
   button:active:not(:disabled){transform:scale(.97)}
   button:disabled{opacity:.55;cursor:wait}
@@ -68,9 +81,12 @@
   .results{margin-top:34px}
   .rv{opacity:0;transform:translateY(18px);animation:rise .6s cubic-bezier(.2,.8,.2,1) forwards}
   .repo-heading{background:rgba(18,24,41,.85);border:1px solid #29314b;padding:26px;border-radius:18px;margin-bottom:20px;
-    position:relative;overflow:hidden}
-  .repo-heading::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
-    background:linear-gradient(90deg,#a58bff,#55d6ff)}
+    position:relative}
+  .repo-heading::before{content:'';position:absolute;inset:-1px;border-radius:19px;padding:1.5px;
+    background:conic-gradient(from var(--ang),#a58bff,#55d6ff,#8065ff,#a58bff);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;
+    opacity:.65;animation:spinAng 7s linear infinite;pointer-events:none}
   .repo-heading h2{color:#c5b4ff;margin-bottom:8px;overflow-wrap:anywhere;font-family:'Space Grotesk';font-size:26px}
   .repo-heading .branch{display:inline-block;font-family:'JetBrains Mono';font-size:11.5px;color:#8fd0ff;border:1px solid #2c4a66;
     background:rgba(24,52,80,.5);border-radius:14px;padding:3px 11px;margin:6px 0 10px}
@@ -79,12 +95,16 @@
     transition:color .2s,gap .2s}
   .repo-link:hover{color:#dcd2ff;gap:10px}
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
-  .card{background:rgba(18,24,41,.85);border:1px solid #29314b;padding:20px;border-radius:15px;min-width:0;
+  .card{background:rgba(18,24,41,.85);border:1px solid #29314b;padding:20px;border-radius:15px;min-width:0;position:relative;
     transition:transform .25s,border-color .25s,box-shadow .25s}
+  .card::after,.panel::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:radial-gradient(340px circle at var(--mx,50%) var(--my,50%),rgba(139,124,255,.13),transparent 65%);
+    opacity:0;transition:opacity .35s}
+  .card:hover::after,.panel:hover::after{opacity:1}
   .card:hover{transform:translateY(-4px);border-color:#4a4170;box-shadow:0 14px 34px rgba(0,0,0,.4)}
   .card small{color:#8e9ab5;font-size:12px;letter-spacing:1.6px;text-transform:uppercase;font-weight:600}
   .card h2{margin-top:10px;font-size:clamp(22px,4.5vw,30px);color:#b4a5ff;overflow-wrap:anywhere;font-family:'Space Grotesk'}
-  .panel{background:rgba(18,24,41,.85);border:1px solid #29314b;padding:24px;border-radius:16px;margin-bottom:18px;
+  .panel{background:rgba(18,24,41,.85);border:1px solid #29314b;padding:24px;border-radius:16px;margin-bottom:18px;position:relative;
     transition:border-color .25s}
   .panel:hover{border-color:#3a3455}
   .panel h3{margin-bottom:18px;color:#c5b9ff;font-family:'Space Grotesk';font-size:17px;display:flex;align-items:center;gap:9px}
@@ -266,6 +286,26 @@ function countUp(el,target,dur){
   requestAnimationFrame(step);
 }
 
+function showSkeletons(){
+  resultsEl.hidden=false;emptyEl.hidden=true;
+  document.getElementById('repoName').innerHTML='<div class="skeleton" style="height:26px;width:48%"></div>';
+  var bp=document.getElementById('branchPill');bp.style.visibility='hidden';
+  document.getElementById('description').innerHTML='<div class="skeleton" style="height:14px;width:82%;margin-bottom:9px"></div><div class="skeleton" style="height:14px;width:60%"></div>';
+  var sc=document.getElementById('stats');sc.replaceChildren();
+  for(var i=0;i<4;i++){
+    var c=document.createElement('div');c.className='card';
+    c.innerHTML='<div class="skeleton" style="height:11px;width:44%"></div><div class="skeleton" style="height:30px;width:70%;margin-top:14px"></div>';
+    sc.appendChild(c);
+  }
+  var line='<div class="skeleton" style="height:13px;margin:9px 0"></div>';
+  document.getElementById('languages').innerHTML=line.repeat(4);
+  document.getElementById('folders').innerHTML=line.repeat(5);
+  document.getElementById('files').innerHTML=line.repeat(5);
+  document.getElementById('extensions').innerHTML='<div class="skeleton" style="height:28px;width:240px;border-radius:9px"></div>';
+  document.getElementById('readme').innerHTML=line.repeat(6);
+  resultsEl.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 function analyze(){
   var input=repoEl.value;
   if(!input.trim()){setStatus('Please enter a GitHub repository URL.','err');repoEl.focus();return}
@@ -273,8 +313,9 @@ function analyze(){
   if(!parsed){setStatus('Invalid GitHub URL. Use owner/repository or a full github.com link.','err');return}
 
   btn.disabled=true;btn.textContent='Analyzing\u2026';
-  resultsEl.hidden=true;emptyEl.hidden=true;
+  emptyEl.hidden=true;
   setLoading('Connecting to GitHub');
+  showSkeletons();
 
   var base='/repos/'+parsed.owner+'/'+parsed.name;
   var details;
@@ -316,6 +357,7 @@ function analyze(){
     paint(details,langs,files,folders,extensions,readme,treeData.truncated);
     setStatus(treeData.truncated?'Analysis complete — GitHub truncated the file tree (very large repo).':'\u2713 Repository successfully analyzed!',treeData.truncated?'':'ok');
   }).catch(function(err){
+    resultsEl.hidden=true;
     setStatus('Error: '+(err&&err.message?err.message:'Something went wrong.'),'err');
     emptyEl.hidden=false;
   }).finally(function(){
@@ -325,7 +367,8 @@ function analyze(){
 
 function paint(d,langs,files,folders,extensions,readme,truncated){
   document.getElementById('repoName').textContent=d.full_name;
-  document.getElementById('branchPill').textContent='\u2387 '+d.default_branch;
+  var bp=document.getElementById('branchPill');bp.style.visibility='';
+  bp.textContent='\u2387 '+d.default_branch;
   document.getElementById('description').textContent=d.description||'No description available.';
   document.getElementById('repoLink').href=d.html_url;
 
@@ -386,6 +429,26 @@ function paint(d,langs,files,folders,extensions,readme,truncated){
 
 btn.addEventListener('click',analyze);
 repoEl.addEventListener('keydown',function(e){if(e.key==='Enter')analyze()});
+
+/* cursor spotlight glow on cards/panels (21st.dev-style) */
+document.addEventListener('pointermove',function(e){
+  var t=e.target&&e.target.closest?e.target.closest('.card,.panel'):null;
+  if(!t)return;
+  var r=t.getBoundingClientRect();
+  t.style.setProperty('--mx',(e.clientX-r.left)+'px');
+  t.style.setProperty('--my',(e.clientY-r.top)+'px');
+},{passive:true});
+
+/* magnetic button (fine pointers only) */
+if(window.matchMedia&&matchMedia('(pointer:fine)').matches){
+  btn.addEventListener('mousemove',function(e){
+    if(btn.disabled)return;
+    var r=btn.getBoundingClientRect();
+    var dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);
+    btn.style.transform='translate('+(dx*.12)+'px,'+(dy*.22-1)+'px)';
+  });
+  btn.addEventListener('mouseleave',function(){btn.style.transform=''});
+}
 
 /* shareable auto-analyze: /repomind?repo=owner/name */
 try{
